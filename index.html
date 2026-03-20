@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Delen met Breuken — Oefenprogramma</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FFF8F0;
+    --card: #FFFFFF;
+    --primary: #FF6B35;
+    --primary-light: #FF8C5A;
+    --secondary: #4ECDC4;
+    --secondary-light: #7EDDD6;
+    --accent: #FFE66D;
+    --correct: #2ECC71;
+    --correct-light: #A8E6CF;
+    --wrong: #E74C3C;
+    --wrong-light: #FFAAA5;
+    --text: #2D3436;
+    --text-light: #636E72;
+    --shadow: 0 4px 20px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+    --radius: 20px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100dvh;
+    overflow: hidden;
+    position: relative;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%; right: -30%;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(78,205,196,0.12) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -30%; left: -20%;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,107,53,0.1) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .app {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 10px 14px;
+    position: relative;
+    z-index: 1;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .header { text-align: center; padding: 6px 0 2px; }
+
+  .header h1 {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .header .subtitle {
+    font-size: 0.75rem;
+    color: var(--text-light);
+  }
+
+  .stats-bar { display: flex; gap: 6px; margin: 6px 0; }
+
+  .stat-pill {
+    flex: 1;
+    background: var(--card);
+    border-radius: 12px;
+    padding: 6px 8px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+
+  .stat-pill .stat-value {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .stat-pill .stat-label {
+    font-size: 0.55rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-light);
+    margin-top: 1px;
+  }
+
+  .stat-pill.score .stat-value { color: var(--primary); }
+  .stat-pill.streak .stat-value { color: var(--secondary); }
+  .stat-pill.level .stat-value { color: #9B59B6; }
+
+  .progress-wrap {
+    background: #E8E8E8;
+    border-radius: 10px;
+    height: 5px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 10px;
+    background: linear-gradient(90deg, var(--secondary), var(--primary));
+    transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .screen { display: none; flex-direction: column; flex: 1; min-height: 0; }
+  .screen.active { display: flex; }
+
+  .start-screen {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 18px;
+    padding: 12px 0;
+    overflow-y: auto;
+  }
+
+  .start-icon {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--primary-light));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.8rem;
+    box-shadow: var(--shadow-lg);
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .start-screen h2 {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.3rem;
+  }
+
+  .start-screen p {
+    color: var(--text-light);
+    font-size: 0.88rem;
+    line-height: 1.4;
+    max-width: 290px;
+  }
+
+  .level-select {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .level-btn {
+    border: none;
+    border-radius: 14px;
+    padding: 12px 18px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--shadow);
+  }
+
+  .level-btn:active { transform: scale(0.97); }
+
+  .level-btn .lvl-icon {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+  }
+
+  .level-btn .lvl-info { text-align: left; }
+  .level-btn .lvl-title { display: block; }
+  .level-btn .lvl-desc { display: block; font-size: 0.68rem; font-weight: 600; opacity: 0.7; }
+
+  .level-btn.easy { background: var(--correct-light); color: #1A7A4C; }
+  .level-btn.easy .lvl-icon { background: var(--correct); color: white; }
+  .level-btn.medium { background: #FFE0B2; color: #E65100; }
+  .level-btn.medium .lvl-icon { background: var(--primary); color: white; }
+  .level-btn.hard { background: #E1BEE7; color: #6A1B9A; }
+  .level-btn.hard .lvl-icon { background: #9B59B6; color: white; }
+
+  .quiz-screen { gap: 0; }
+
+  .quiz-content {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+    min-height: 0;
+  }
+
+  .question-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 14px 14px;
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+    animation: slideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .question-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--secondary);
+    margin-bottom: 8px;
+  }
+
+  .fraction-equation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 2px 0 6px;
+  }
+
+  .fraction {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+  }
+
+  .fraction .num, .fraction .den {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.45rem;
+    font-weight: 700;
+    line-height: 1.1;
+    min-width: 26px;
+    text-align: center;
+  }
+
+  .fraction .bar {
+    width: 100%;
+    min-width: 26px;
+    height: 3px;
+    background: var(--text);
+    border-radius: 2px;
+  }
+
+  .operator, .equals {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.45rem;
+    font-weight: 700;
+  }
+
+  .operator { color: var(--primary); }
+  .equals { color: var(--secondary); }
+
+  .answer-placeholder {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+  }
+
+  .answer-placeholder .slot {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.45rem;
+    font-weight: 700;
+    min-width: 34px;
+    text-align: center;
+    line-height: 1.1;
+    color: var(--primary);
+    background: rgba(255,107,53,0.08);
+    border-radius: 6px;
+    padding: 1px 5px;
+    border: 2px dashed rgba(255,107,53,0.3);
+  }
+
+  .answer-placeholder .slot.filled {
+    background: rgba(255,107,53,0.15);
+    border-style: solid;
+    border-color: var(--primary);
+  }
+
+  .answer-placeholder .bar {
+    width: 100%;
+    min-width: 34px;
+    height: 3px;
+    background: var(--text);
+    border-radius: 2px;
+  }
+
+  .hint-area {
+    background: linear-gradient(135deg, rgba(78,205,196,0.08), rgba(255,230,109,0.12));
+    border-radius: 10px;
+    padding: 8px 12px;
+    margin-top: 6px;
+    border-left: 3px solid var(--secondary);
+  }
+
+  .hint-toggle {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 700;
+    font-size: 0.78rem;
+    color: var(--secondary);
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: inherit;
+    padding: 0;
+  }
+
+  .hint-content { display: none; margin-top: 6px; font-size: 0.8rem; line-height: 1.45; }
+  .hint-content.show { display: block; animation: slideIn 0.3s ease; }
+  .hint-content .step { margin-bottom: 4px; padding-left: 4px; }
+  .hint-content .step-num { font-weight: 800; color: var(--primary); }
+
+  .hint-fraction {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    vertical-align: middle;
+    margin: 0 2px;
+  }
+
+  .hint-fraction .hf-num, .hint-fraction .hf-den {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    line-height: 1.1;
+    text-align: center;
+  }
+
+  .hint-fraction .hf-bar {
+    width: 100%;
+    height: 2px;
+    background: var(--text);
+    border-radius: 1px;
+  }
+
+  .input-area {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 10px 14px 12px;
+    box-shadow: var(--shadow);
+  }
+
+  .input-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-light);
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  .input-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+  }
+
+  .input-fraction {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .input-fraction label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .input-display {
+    width: 76px;
+    height: 46px;
+    border: 3px solid #E0E0E0;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text);
+    background: var(--bg);
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .input-display.active {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(255,107,53,0.15);
+    background: white;
+  }
+
+  .input-display.active::after {
+    content: '';
+    position: absolute;
+    right: 7px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 22px;
+    background: var(--primary);
+    border-radius: 1px;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .input-display.correct-input {
+    border-color: var(--correct);
+    background: var(--correct-light);
+  }
+
+  .input-display.wrong-input {
+    border-color: var(--wrong);
+    background: var(--wrong-light);
+    animation: shake 0.4s ease;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+
+  .input-display .placeholder-text {
+    color: #C0C0C0;
+    font-size: 1.1rem;
+  }
+
+  .input-divider {
+    width: 40px;
+    height: 3px;
+    background: var(--text);
+    border-radius: 2px;
+  }
+
+  .numpad {
+    background: var(--card);
+    border-radius: 18px 18px 12px 12px;
+    padding: 8px 8px 10px;
+    box-shadow: 0 -2px 20px rgba(0,0,0,0.06);
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+
+  .numpad-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+
+  .numpad-btn {
+    height: 48px;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.08s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .numpad-btn:active { transform: scale(0.92); }
+
+  .numpad-btn.digit {
+    background: #F5F0EB;
+    color: var(--text);
+  }
+
+  .numpad-btn.digit:active { background: #E8E0D8; }
+
+  .numpad-btn.action {
+    background: var(--secondary-light);
+    color: white;
+    font-size: 0.75rem;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+  }
+
+  .numpad-btn.action:active { background: var(--secondary); }
+
+  .numpad-btn.backspace {
+    background: #FFE0D0;
+    color: var(--primary);
+    font-size: 1.15rem;
+  }
+
+  .numpad-btn.backspace:active { background: #FFD0B8; }
+
+  .numpad-btn.check-btn {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    font-size: 0.85rem;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    grid-column: span 2;
+  }
+
+  .numpad-btn.check-btn:active {
+    background: linear-gradient(135deg, #E55A2B, var(--primary));
+  }
+
+  .numpad-btn.next-btn {
+    background: linear-gradient(135deg, var(--secondary), var(--secondary-light));
+    color: white;
+    font-size: 0.9rem;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    grid-column: span 4;
+    height: 46px;
+  }
+
+  .numpad-btn.next-btn:active {
+    background: linear-gradient(135deg, #3DBDB5, var(--secondary));
+  }
+
+  .numpad-btn.minus-btn {
+    background: #E8E0F0;
+    color: #7B68AE;
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
+
+  .numpad-btn.minus-btn:active { background: #D8D0E0; }
+
+  .feedback {
+    text-align: center;
+    padding: 10px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    animation: slideIn 0.3s ease;
+  }
+
+  .feedback.correct { background: var(--correct-light); color: #1A7A4C; }
+  .feedback.wrong { background: var(--wrong-light); color: #C0392B; }
+  .feedback .fb-icon { font-size: 1.2rem; display: block; margin-bottom: 2px; }
+  .feedback .fb-detail { font-size: 0.75rem; font-weight: 600; margin-top: 2px; opacity: 0.85; }
+
+  .explanation-card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 12px;
+    box-shadow: var(--shadow);
+    border-left: 3px solid var(--secondary);
+    animation: slideIn 0.4s ease;
+  }
+
+  .explanation-card h3 {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 0.9rem;
+    color: var(--secondary);
+    margin-bottom: 6px;
+  }
+
+  .explanation-card p { font-size: 0.8rem; line-height: 1.45; }
+  .explanation-card .step-explain { margin: 4px 0; }
+
+  .results-screen {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 16px;
+    padding: 16px 0;
+    overflow-y: auto;
+  }
+
+  .results-icon {
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.6rem;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .results-icon.great { background: linear-gradient(135deg, var(--correct-light), var(--accent)); }
+  .results-icon.okay { background: linear-gradient(135deg, var(--accent), #FFE0B2); }
+  .results-icon.retry { background: linear-gradient(135deg, var(--wrong-light), #FFE0B2); }
+
+  .results-score {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 2.8rem;
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  .results-msg { font-size: 1.05rem; font-weight: 700; }
+  .results-detail { font-size: 0.85rem; color: var(--text-light); }
+
+  .results-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    width: 100%;
+    max-width: 260px;
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: white;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(255,107,53,0.3);
+    transition: all 0.15s;
+  }
+
+  .btn-primary:active { transform: scale(0.97); }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 12px;
+    border: 3px solid var(--secondary);
+    border-radius: 14px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--secondary);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-secondary:active { transform: scale(0.97); background: rgba(78,205,196,0.08); }
+
+  .confetti-piece {
+    position: fixed;
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    z-index: 100;
+    pointer-events: none;
+    animation: confettiFall 2.5s ease-in forwards;
+  }
+
+  @keyframes confettiFall {
+    0% { opacity: 1; transform: translateY(-20px) rotate(0deg); }
+    100% { opacity: 0; transform: translateY(100vh) rotate(720deg); }
+  }
+
+  .tutorial-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 50;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    backdrop-filter: blur(4px);
+  }
+
+  .tutorial-overlay.active { display: flex; }
+
+  .tutorial-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 22px 18px;
+    max-width: 330px;
+    width: 100%;
+    box-shadow: var(--shadow-lg);
+    animation: slideIn 0.4s ease;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  .tutorial-card h3 {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.1rem;
+    color: var(--primary);
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  .tutorial-card p {
+    font-size: 0.85rem;
+    line-height: 1.45;
+    margin-bottom: 6px;
+  }
+
+  .tutorial-card .rule-box {
+    background: linear-gradient(135deg, rgba(255,107,53,0.08), rgba(255,230,109,0.15));
+    border-radius: 12px;
+    padding: 11px;
+    margin: 10px 0;
+    text-align: center;
+  }
+
+  .tutorial-card .rule-box .rule-text {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary);
+  }
+
+  .tutorial-example {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    margin: 8px 0;
+    flex-wrap: wrap;
+  }
+
+  .tut-frac {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+  }
+
+  .tut-frac .tn, .tut-frac .td {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.1;
+    text-align: center;
+    min-width: 18px;
+  }
+
+  .tut-frac .tb {
+    width: 100%;
+    height: 2px;
+    background: var(--text);
+    border-radius: 1px;
+  }
+
+  .tut-op {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  .tut-arrow { font-size: 1rem; color: var(--secondary); }
+
+  ::-webkit-scrollbar { width: 0; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>Delen met Breuken</h1>
+    <div class="subtitle">Oefenprogramma voor groep 8</div>
+  </div>
+  <div class="screen start-screen active" id="startScreen">
+    <div class="start-icon">➗</div>
+    <h2>Klaar om te oefenen?</h2>
+    <p>Leer stap voor stap hoe je deelt met breuken. Kies een niveau om te beginnen!</p>
+    <div class="level-select">
+      <button class="level-btn easy" onclick="startGame('easy')">
+        <div class="lvl-icon">⭐</div>
+        <div class="lvl-info">
+          <span class="lvl-title">Makkelijk</span>
+          <span class="lvl-desc">Kleine getallen · met uitleg</span>
+        </div>
+      </button>
+      <button class="level-btn medium" onclick="startGame('medium')">
+        <div class="lvl-icon">🔥</div>
+        <div class="lvl-info">
+          <span class="lvl-title">Gemiddeld</span>
+          <span class="lvl-desc">Grotere getallen · vereenvoudigen</span>
+        </div>
+      </button>
+      <button class="level-btn hard" onclick="startGame('hard')">
+        <div class="lvl-icon">🚀</div>
+        <div class="lvl-info">
+          <span class="lvl-title">Moeilijk</span>
+          <span class="lvl-desc">Mix van alles · snel denken</span>
+        </div>
+      </button>
+    </div>
+    <button class="btn-secondary" onclick="showTutorial()" style="max-width:300px;margin-top:2px;">📖 Hoe werkt delen met breuken?</button>
+  </div>
+  <div class="screen quiz-screen" id="quizScreen">
+    <div class="stats-bar">
+      <div class="stat-pill score"><div class="stat-value" id="scoreVal">0</div><div class="stat-label">Score</div></div>
+      <div class="stat-pill streak"><div class="stat-value" id="streakVal">0</div><div class="stat-label">Reeks</div></div>
+      <div class="stat-pill level"><div class="stat-value" id="questionNum">1/10</div><div class="stat-label">Vraag</div></div>
+    </div>
+    <div class="progress-wrap"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="quiz-content" id="quizContent">
+      <div class="question-card" id="questionCard">
+        <div class="question-label">Los op en vereenvoudig</div>
+        <div class="fraction-equation" id="fractionEquation"></div>
+        <div class="hint-area">
+          <button class="hint-toggle" onclick="toggleHint()">💡 <span id="hintToggleText">Toon hint</span></button>
+          <div class="hint-content" id="hintContent"></div>
+        </div>
+      </div>
+      <div class="input-area" id="inputArea">
+        <div class="input-label">Jouw antwoord (vereenvoudigd)</div>
+        <div class="input-row">
+          <div class="input-fraction">
+            <label>Teller</label>
+            <div class="input-display active" id="dispNum" onclick="setActiveField('num')"><span class="placeholder-text">?</span></div>
+          </div>
+          <div><div style="height:16px"></div><div class="input-divider"></div></div>
+          <div class="input-fraction">
+            <label>Noemer</label>
+            <div class="input-display" id="dispDen" onclick="setActiveField('den')"><span class="placeholder-text">?</span></div>
+          </div>
+        </div>
+      </div>
+      <div id="feedbackArea"></div>
+      <div id="explanationArea"></div>
+    </div>
+    <div class="numpad" id="numpad">
+      <div class="numpad-grid" id="numpadGrid">
+        <button class="numpad-btn digit" onclick="numpadInput('1')">1</button>
+        <button class="numpad-btn digit" onclick="numpadInput('2')">2</button>
+        <button class="numpad-btn digit" onclick="numpadInput('3')">3</button>
+        <button class="numpad-btn backspace" onclick="numpadBackspace()">⌫</button>
+        <button class="numpad-btn digit" onclick="numpadInput('4')">4</button>
+        <button class="numpad-btn digit" onclick="numpadInput('5')">5</button>
+        <button class="numpad-btn digit" onclick="numpadInput('6')">6</button>
+        <button class="numpad-btn minus-btn" onclick="numpadMinus()">−</button>
+        <button class="numpad-btn digit" onclick="numpadInput('7')">7</button>
+        <button class="numpad-btn digit" onclick="numpadInput('8')">8</button>
+        <button class="numpad-btn digit" onclick="numpadInput('9')">9</button>
+        <button class="numpad-btn action" onclick="switchField()">↕️ Wissel</button>
+        <button class="numpad-btn digit" style="grid-column: span 2;" onclick="numpadInput('0')">0</button>
+        <button class="numpad-btn check-btn" id="numpadCheck" onclick="checkAnswer()">Controleer ✓</button>
+      </div>
+    </div>
+  </div>
+  <div class="screen results-screen" id="resultsScreen">
+    <div class="results-icon" id="resultsIcon">🎉</div>
+    <div class="results-score" id="resultsScore">8/10</div>
+    <div class="results-msg" id="resultsMsg">Goed gedaan!</div>
+    <div class="results-detail" id="resultsDetail"></div>
+    <div class="results-buttons">
+      <button class="btn-primary" onclick="restartSameLevel()">Opnieuw spelen</button>
+      <button class="btn-secondary" onclick="goHome()">Ander niveau kiezen</button>
+    </div>
+  </div>
+</div>
+<div class="tutorial-overlay" id="tutorialOverlay" onclick="if(event.target===this)closeTutorial()">
+  <div class="tutorial-card">
+    <h3>📖 Hoe deel je met breuken?</h3>
+    <p>Bij het <strong>delen</strong> door een breuk gebruik je een handige truc:</p>
+    <div class="rule-box"><div class="rule-text">Delen = vermenigvuldigen met het omgekeerde!</div></div>
+    <p>Draai de tweede breuk om (verwissel teller en noemer) en vermenigvuldig dan.</p>
+    <p style="font-weight:700;color:var(--primary);margin-top:10px;">Voorbeeld:</p>
+    <div class="tutorial-example">
+      <span class="tut-frac"><span class="tn">2</span><span class="tb"></span><span class="td">3</span></span>
+      <span class="tut-op">÷</span>
+      <span class="tut-frac"><span class="tn">4</span><span class="tb"></span><span class="td">5</span></span>
+      <span class="tut-arrow">→</span>
+      <span class="tut-frac"><span class="tn">2</span><span class="tb"></span><span class="td">3</span></span>
+      <span class="tut-op">×</span>
+      <span class="tut-frac"><span class="tn" style="color:var(--secondary)">5</span><span class="tb"></span><span class="td" style="color:var(--secondary)">4</span></span>
+      <span class="tut-op">=</span>
+      <span class="tut-frac"><span class="tn">10</span><span class="tb"></span><span class="td">12</span></span>
+      <span class="tut-op">=</span>
+      <span class="tut-frac"><span class="tn" style="color:var(--correct)">5</span><span class="tb"></span><span class="td" style="color:var(--correct)">6</span></span>
+    </div>
+    <p style="font-size:0.8rem;color:var(--text-light);">Vergeet niet te <strong>vereenvoudigen</strong>! Deel teller en noemer door de GGD.</p>
+    <button class="btn-primary" onclick="closeTutorial()" style="margin-top:12px;">Begrepen! 👍</button>
+  </div>
+</div>
+<script>
+let level = 'easy';
+let questions = [];
+let currentQ = 0;
+let score = 0;
+let streak = 0;
+let maxStreak = 0;
+let answered = false;
+const TOTAL = 10;
+let activeField = 'num';
+let fieldValues = { num: '', den: '' };
+function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b]; } return a; }
+function simplify(n, d) { if (d < 0) { n = -n; d = -d; } const g = gcd(n, d); return [n / g, d / g]; }
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function generateQuestion(lvl) {
+  let a_n, a_d, b_n, b_d;
+  if (lvl === 'easy') {
+    a_n = randInt(1, 5); a_d = randInt(2, 6); b_n = randInt(1, 4); b_d = randInt(2, 5);
+  } else if (lvl === 'medium') {
+    a_n = randInt(1, 8); a_d = randInt(2, 10); b_n = randInt(1, 8); b_d = randInt(2, 10);
+  } else {
+    a_n = randInt(1, 12); a_d = randInt(2, 12); b_n = randInt(1, 12); b_d = randInt(2, 12);
+  }
+  if (b_n === 0) b_n = 1;
+  const raw_n = a_n * b_d;
+  const raw_d = a_d * b_n;
+  const [ans_n, ans_d] = simplify(raw_n, raw_d);
+  return { a_n, a_d, b_n, b_d, raw_n, raw_d, ans_n, ans_d };
+}
+function makeFrac(n, d) { return `<span class="fraction"><span class="num">${n}</span><span class="bar"></span><span class="den">${d}</span></span>`; }
+function hintFrac(n, d) { return `<span class="hint-fraction"><span class="hf-num">${n}</span><span class="hf-bar"></span><span class="hf-den">${d}</span></span>`; }
+function setActiveField(f) { if (answered) return; activeField = f; updateDisplay(); }
+function switchField() { if (answered) return; activeField = activeField === 'num' ? 'den' : 'num'; updateDisplay(); }
+function updateDisplay() {
+  const dn = document.getElementById('dispNum');
+  const dd = document.getElementById('dispDen');
+  dn.classList.toggle('active', activeField === 'num' && !answered);
+  dd.classList.toggle('active', activeField === 'den' && !answered);
+  dn.innerHTML = fieldValues.num === '' ? '<span class="placeholder-text">?</span>' : fieldValues.num;
+  dd.innerHTML = fieldValues.den === '' ? '<span class="placeholder-text">?</span>' : fieldValues.den;
+}
+function numpadInput(d) { if (answered) return; const cur = fieldValues[activeField]; if (cur.replace('-', '').length >= 3) return; fieldValues[activeField] = cur + d; updateDisplay(); }
+function numpadBackspace() { if (answered) return; const cur = fieldValues[activeField]; if (cur.length > 0) { fieldValues[activeField] = cur.slice(0, -1); updateDisplay(); } }
+function numpadMinus() { if (answered) return; const cur = fieldValues[activeField]; fieldValues[activeField] = cur.startsWith('-') ? cur.slice(1) : `-${cur}`; updateDisplay(); }
+function showNextBtn() {
+  const btn = document.getElementById('numpadCheck');
+  btn.className = 'numpad-btn check-btn';
+  btn.textContent = 'Volgende →';
+  btn.onclick = nextQuestion;
+}
+function hideNextBtn() {
+  const btn = document.getElementById('numpadCheck');
+  btn.className = 'numpad-btn check-btn';
+  btn.textContent = 'Controleer ✓';
+  btn.onclick = checkAnswer;
+}
+function showScreen(id) { document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function startGame(lvl) { level = lvl; score = 0; streak = 0; maxStreak = 0; currentQ = 0; questions = []; for (let i = 0; i < TOTAL; i += 1) questions.push(generateQuestion(lvl)); showScreen('quizScreen'); showQuestion(); }
+function showQuestion() {
+  answered = false;
+  activeField = 'num';
+  fieldValues = { num: '', den: '' };
+  const q = questions[currentQ];
+  document.getElementById('scoreVal').textContent = score;
+  document.getElementById('streakVal').textContent = streak;
+  document.getElementById('questionNum').textContent = `${currentQ + 1}/${TOTAL}`;
+  document.getElementById('progressFill').style.width = `${(currentQ / TOTAL) * 100}%`;
+  document.getElementById('fractionEquation').innerHTML = `${makeFrac(q.a_n, q.a_d)}<span class="operator">÷</span>${makeFrac(q.b_n, q.b_d)}<span class="equals">=</span><span class="answer-placeholder"><span class="slot" id="slotNum">?</span><span class="bar"></span><span class="slot" id="slotDen">?</span></span>`;
+  document.getElementById('hintContent').innerHTML = `<div class="step"><span class="step-num">Stap 1:</span> Draai om: ${hintFrac(q.b_n, q.b_d)} wordt ${hintFrac(q.b_d, q.b_n)}</div><div class="step"><span class="step-num">Stap 2:</span> Vermenigvuldig: ${hintFrac(q.a_n, q.a_d)} × ${hintFrac(q.b_d, q.b_n)} = ${hintFrac(q.raw_n, q.raw_d)}</div>${q.raw_n !== q.ans_n || q.raw_d !== q.ans_d ? `<div class="step"><span class="step-num">Stap 3:</span> Vereenvoudig: ${hintFrac(q.raw_n, q.raw_d)} = ${hintFrac(q.ans_n, q.ans_d)}</div>` : ''}`;
+  document.getElementById('hintContent').classList.remove('show');
+  document.getElementById('hintToggleText').textContent = 'Toon hint';
+  const dn = document.getElementById('dispNum');
+  const dd = document.getElementById('dispDen');
+  dn.className = 'input-display active';
+  dd.className = 'input-display';
+  updateDisplay();
+  hideNextBtn();
+  document.getElementById('feedbackArea').innerHTML = '';
+  document.getElementById('explanationArea').innerHTML = '';
+  const card = document.getElementById('questionCard');
+  card.style.animation = 'none'; card.offsetHeight; card.style.animation = '';
+  document.getElementById('quizContent').scrollTop = 0;
+}
+function toggleHint() { const el = document.getElementById('hintContent'); const txt = document.getElementById('hintToggleText'); el.classList.toggle('show'); txt.textContent = el.classList.contains('show') ? 'Verberg hint' : 'Toon hint'; }
+function checkAnswer() {
+  if (answered) return;
+  const userN = parseInt(fieldValues.num, 10);
+  const userD = parseInt(fieldValues.den, 10);
+  const dn = document.getElementById('dispNum');
+  const dd = document.getElementById('dispDen');
+  if (Number.isNaN(userN) || Number.isNaN(userD) || userD === 0) {
+    if (Number.isNaN(userN)) { dn.classList.add('wrong-input'); setTimeout(() => dn.classList.remove('wrong-input'), 500); }
+    if (Number.isNaN(userD) || userD === 0) { dd.classList.add('wrong-input'); setTimeout(() => dd.classList.remove('wrong-input'), 500); }
+    return;
+  }
+  answered = true;
+  const q = questions[currentQ];
+  const [sN, sD] = simplify(userN, userD);
+  const correct = sN === q.ans_n && sD === q.ans_d;
+  dn.classList.remove('active'); dd.classList.remove('active');
+  document.getElementById('slotNum').textContent = q.ans_n;
+  document.getElementById('slotNum').classList.add('filled');
+  document.getElementById('slotDen').textContent = q.ans_d;
+  document.getElementById('slotDen').classList.add('filled');
+  const fb = document.getElementById('feedbackArea');
+  if (correct) {
+    score += 1; streak += 1; if (streak > maxStreak) maxStreak = streak;
+    dn.classList.add('correct-input'); dd.classList.add('correct-input');
+    const msgs = ['Super! 🎉', 'Goed zo! ⭐', 'Helemaal goed! 💪', 'Top! 🔥', 'Knap! 🧠'];
+    fb.innerHTML = `<div class="feedback correct"><span class="fb-icon">✅</span>${msgs[randInt(0, msgs.length - 1)]}${streak >= 3 ? `<div class="fb-detail">${streak} op een rij!</div>` : ''}</div>`;
+    if (streak >= 3) spawnConfetti();
+  } else {
+    streak = 0;
+    dn.classList.add('wrong-input'); dd.classList.add('wrong-input');
+    fb.innerHTML = `<div class="feedback wrong"><span class="fb-icon">❌</span>Helaas, niet goed.<div class="fb-detail">Het goede antwoord is ${q.ans_n}/${q.ans_d}</div></div>`;
+    const g = gcd(q.raw_n, q.raw_d);
+    document.getElementById('explanationArea').innerHTML = `<div class="explanation-card"><h3>Zo werkt het:</h3><p class="step-explain"><strong>1.</strong> Draai ${hintFrac(q.b_n, q.b_d)} om → ${hintFrac(q.b_d, q.b_n)}</p><p class="step-explain"><strong>2.</strong> ${q.a_n} × ${q.b_d} = ${q.raw_n} (teller)<br>${q.a_d} × ${q.b_n} = ${q.raw_d} (noemer)</p>${g > 1 ? `<p class="step-explain"><strong>3.</strong> Vereenvoudig: deel door ${g}<br>${hintFrac(q.raw_n, q.raw_d)} = ${hintFrac(q.ans_n, q.ans_d)}</p>` : ''}</div>`;
+    setTimeout(() => fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+  }
+  document.getElementById('scoreVal').textContent = score;
+  document.getElementById('streakVal').textContent = streak;
+  showNextBtn();
+}
+function nextQuestion() { currentQ += 1; if (currentQ >= TOTAL) showResults(); else showQuestion(); }
+function showResults() {
+  showScreen('resultsScreen');
+  document.getElementById('resultsScore').textContent = `${score}/${TOTAL}`;
+  const pct = score / TOTAL;
+  const icon = document.getElementById('resultsIcon');
+  const msg = document.getElementById('resultsMsg');
+  const detail = document.getElementById('resultsDetail');
+  if (pct >= 0.8) {
+    icon.textContent = '🏆'; icon.className = 'results-icon great'; msg.textContent = 'Uitstekend!'; detail.textContent = `Langste reeks: ${maxStreak}. Je beheerst dit niveau!`; spawnConfetti();
+  } else if (pct >= 0.5) {
+    icon.textContent = '💪'; icon.className = 'results-icon okay'; msg.textContent = 'Goed bezig!'; detail.textContent = `Langste reeks: ${maxStreak}. Blijf oefenen!`;
+  } else {
+    icon.textContent = '📚'; icon.className = 'results-icon retry'; msg.textContent = 'Blijf oefenen!'; detail.textContent = 'Bekijk de uitleg en probeer het opnieuw.';
+  }
+}
+function restartSameLevel() { startGame(level); }
+function goHome() { showScreen('startScreen'); }
+function showTutorial() { document.getElementById('tutorialOverlay').classList.add('active'); }
+function closeTutorial() { document.getElementById('tutorialOverlay').classList.remove('active'); }
+function spawnConfetti() {
+  const colors = ['#FF6B35', '#4ECDC4', '#FFE66D', '#FF8C5A', '#2ECC71', '#E74C3C', '#9B59B6'];
+  for (let i = 0; i < 30; i += 1) {
+    const c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.left = `${randInt(5, 95)}%`;
+    c.style.top = '-10px';
+    c.style.background = colors[randInt(0, colors.length - 1)];
+    c.style.width = `${randInt(6, 12)}px`;
+    c.style.height = `${randInt(6, 12)}px`;
+    c.style.animationDelay = `${Math.random() * 0.8}s`;
+    c.style.animationDuration = `${1.5 + Math.random() * 1.5}s`;
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 3500);
+  }
+}
+document.addEventListener('keydown', (e) => {
+  if (!document.getElementById('quizScreen').classList.contains('active')) return;
+  if (e.key >= '0' && e.key <= '9') numpadInput(e.key);
+  else if (e.key === 'Backspace') { e.preventDefault(); numpadBackspace(); }
+  else if (e.key === '-') numpadMinus();
+  else if (e.key === 'Tab') { e.preventDefault(); switchField(); }
+  else if (e.key === 'Enter') { if (answered) nextQuestion(); else checkAnswer(); }
+});
+</script>
+</body>
+</html>
