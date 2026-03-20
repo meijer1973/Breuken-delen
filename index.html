@@ -963,19 +963,17 @@ function numpadInput(d) { if (answered) return; const cur = fieldValues[activeFi
 function numpadBackspace() { if (answered) return; const cur = fieldValues[activeField]; if (cur.length > 0) { fieldValues[activeField] = cur.slice(0, -1); updateDisplay(); } }
 function numpadMinus() { if (answered) return; const cur = fieldValues[activeField]; fieldValues[activeField] = cur.startsWith('-') ? cur.slice(1) : `-${cur}`; updateDisplay(); }
 function showNextBtn() {
-  document.getElementById('numpadCheck').style.display = 'none';
-  let nb = document.getElementById('numpadNext');
-  if (!nb) {
-    nb = document.createElement('button');
-    nb.id = 'numpadNext';
-    nb.className = 'numpad-btn next-btn';
-    nb.textContent = 'Volgende vraag →';
-    nb.onclick = nextQuestion;
-    document.getElementById('numpadGrid').appendChild(nb);
-  }
-  nb.style.display = 'flex';
+  const btn = document.getElementById('numpadCheck');
+  btn.className = 'numpad-btn check-btn';
+  btn.textContent = 'Volgende →';
+  btn.onclick = nextQuestion;
 }
-function hideNextBtn() { document.getElementById('numpadCheck').style.display = 'flex'; const nb = document.getElementById('numpadNext'); if (nb) nb.style.display = 'none'; }
+function hideNextBtn() {
+  const btn = document.getElementById('numpadCheck');
+  btn.className = 'numpad-btn check-btn';
+  btn.textContent = 'Controleer ✓';
+  btn.onclick = checkAnswer;
+}
 function showScreen(id) { document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
 function startGame(lvl) { level = lvl; score = 0; streak = 0; maxStreak = 0; currentQ = 0; questions = []; for (let i = 0; i < TOTAL; i += 1) questions.push(generateQuestion(lvl)); showScreen('quizScreen'); showQuestion(); }
 function showQuestion() {
